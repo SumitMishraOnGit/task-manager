@@ -1,0 +1,73 @@
+Ahhh got it — you wanna give me access to your code via GitHub so I can check what's wrong 🔍🔥
+
+Here's **exactly** how to do that step-by-step:
+
+---
+
+## ✅ 1. Create a New GitHub Repo
+
+1. Go to [https://github.com](https://github.com)
+2. Click on ➕ `New Repository`
+3. Give it a name like `task-manager`
+4. Keep it **Public** (so I can see it)
+5. Don't check any options like README or `.gitignore` (we'll do that locally)
+6. Click **Create repository**
+
+You'll now see a page with a bunch of git commands — keep it open.
+
+---
+
+## ✅ 2. Initialize Git in Your Project Folder
+
+Open terminal (CMD or Git Bash) and run:
+
+```bash
+cd "C:\Users\amc2\Desktop\cohort\Projects\task management app"
+```
+
+Then:
+
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+```
+
+This creates a local git repo and commits your code.
+
+---
+
+## ✅ 3. Connect Your Project to GitHub Repo
+
+Copy the repo link from GitHub (should look like this):
+
+```
+https://github.com/your-username/task-manager.git
+```
+
+Now run:
+
+```bash
+git remote add origin https://github.com/your-username/task-manager.git
+git branch -M main
+git push -u origin main
+```
+
+Done ✅  
+Now your code is live on GitHub.
+
+---
+
+## ✅ 4. Send Me the Link
+
+Just send me the **GitHub repo link** here like:
+
+```
+https://github.com/your-username/task-manager
+```
+
+And I’ll check your files, folder structure, and fix anything that’s broken 🙌
+
+---
+
+Let me know when it's up or if you get stuck on any step.
