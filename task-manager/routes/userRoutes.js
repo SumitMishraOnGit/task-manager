@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router(); 
-const User = require("../models/user");
+const User = require("../models/User/");
 const jwt = require("jsonwebtoken")
 router.use(express.json())
 
@@ -17,7 +17,7 @@ router.post("/signup", async (req, res) => {
 
 
 // Get all user
-router.get("/", async (req, res) => {
+router.get("/user/", async (req, res) => {
   try {
     const user = await User.find();
     if (!user.length) return res.status(404).json({ message: "No user found!" });
@@ -28,7 +28,7 @@ router.get("/", async (req, res) => {
 });
 
 // Update a User by ID
-router.put("/:id", async (req, res) => {
+router.put("/user/:id", async (req, res) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!updatedUser) return res.status(404).json({ message: "User not found" });
@@ -39,7 +39,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete a User by ID
-router.delete("/:id", async (req, res) => {
+router.delete("/user/:id", async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
     if (!deletedUser) return res.status(404).json({ message: "User not found" });
@@ -50,7 +50,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // Pagination
-router.get("/paginate", async (req, res) => {
+router.get("/user/paginate", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
