@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router(); 
-const User = require("../models/User/");
+const User = require("../../models/User");
 const jwt = require("jsonwebtoken")
 router.use(express.json())
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", async (req, res) =>{
     try {
         const { name, password, email } = req.body;
         const newUser = new User({ name, password, email });
@@ -17,7 +17,7 @@ router.post("/signup", async (req, res) => {
 
 
 // Get all user
-router.get("/user/", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const user = await User.find();
     if (!user.length) return res.status(404).json({ message: "No user found!" });
@@ -28,7 +28,7 @@ router.get("/user/", async (req, res) => {
 });
 
 // Update a User by ID
-router.put("/user/:id", async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!updatedUser) return res.status(404).json({ message: "User not found" });
@@ -39,7 +39,7 @@ router.put("/user/:id", async (req, res) => {
 });
 
 // Delete a User by ID
-router.delete("/user/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
     if (!deletedUser) return res.status(404).json({ message: "User not found" });
@@ -50,7 +50,7 @@ router.delete("/user/:id", async (req, res) => {
 });
 
 // Pagination
-router.get("/user/paginate", async (req, res) => {
+router.get("/paginate", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
@@ -66,20 +66,27 @@ router.get("/user/paginate", async (req, res) => {
   }
 });
 
-// login route
+// login route (TEMP: before bcrypt)
 router.post("/login", async (req, res) => {
   try {
-    const { password, email } = req.body;
-    if(!email || !password){
-      return res.status(404).json({ message: "Incorrect Credentials" });
-    } else if (async () => {
-      const userExists = await User.findOne({ email });
-      userExists;
-      return res.status(500).json({ message: "User already exist, try another email!"})
-    });
-    res.status(200).send("Welcome Back")
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please enter email and password" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found. Please sign up first." });
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json({ message: "Incorrect password" });
+    }
+
+    res.status(200).json({ message: "Login successful", user });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
