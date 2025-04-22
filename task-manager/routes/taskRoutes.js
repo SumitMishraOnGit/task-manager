@@ -3,7 +3,7 @@ const router = express.Router();
 const Task = require("../../models/Task");
 
 // Create a new task
-router.post("/", async (req, res) => {
+router.post("/",verifyToken, async (req, res) => {
   try {
     const { title, description, dueDate, status } = req.body;
     const newTask = new Task({ title, description, dueDate, status });
@@ -15,7 +15,7 @@ router.post("/", async (req, res) => {
 });
 
 // Get all tasks
-router.get("/", async (req, res) => {
+router.get("/",verifyToken, async (req, res) => {
   try {
     const tasks = await Task.find();
     if (!tasks.length) return res.status(404).json({ message: "No tasks found!" });
@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
 });
 
 //Get task by id
-router.get("/:id", async (req, res) => {
+router.get("/:id",verifyToken, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id); // get task by ID
     if (!task) return res.status(404).json({ message: "Task not found!" }); // check if it exists
@@ -37,7 +37,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Update a task by ID
-router.put("/:id", async (req, res) => {
+router.put("/:id",verifyToken, async (req, res) => {
   try {
     const updatedTask = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedTask) return res.status(404).json({ message: "Task not found" });
@@ -48,7 +48,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete a task by ID
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",verifyToken, async (req, res) => {
   try {
     const deletedTask = await Task.findByIdAndDelete(req.params.id);
     if (!deletedTask) return res.status(404).json({ message: "Task not found" });
@@ -59,7 +59,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // Pagination
-router.get("/paginate", async (req, res) => {
+router.get("/paginate",verifyToken, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
