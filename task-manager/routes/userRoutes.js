@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const verifyToken = require("../../middlewares/authMiddleware");
 const errorHandler = require("../../middleware/errorhandling");
+const uploadProfilePic = require("../../middlewares/multerProfile");
 
 router.use(express.json());
 router.use(errorHandler);
@@ -98,6 +99,25 @@ router.get("/paginate", verifyToken, async (req, res, next) => {
     const totalPages = Math.ceil(totalUsers / limit);
 
     res.status(200).json({ page, limit, totalUsers, totalPages, users });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ------------------ PROFILE PIC UPLOAD ------------------
+router.post("/uploadProfile", verifyToken, uploadProfilePic.single("profilePic"), async (req, res, next) => {
+  try {
+    const filePath = req.file ? req.file.path : null;
+
+    if (!filePath) return res.status(400).json({ message: "No file uploaded" });
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      { file: filePath },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Profile picture uploaded", user: updatedUser });
   } catch (error) {
     next(error);
   }

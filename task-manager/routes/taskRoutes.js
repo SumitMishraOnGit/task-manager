@@ -2,19 +2,33 @@ const express = require("express");
 const router = express.Router();
 const Task = require("../../models/Task");
 const verifyToken = require("../../middlewares/authMiddleware");
+const uploadTaskFile = require("../../middlewares/multerTasks");  
 
-
-// Create a new task
-router.post("/", verifyToken, async (req, res, next) => {
+// Create a new task with file upload
+router.post("/", verifyToken, uploadTaskFile.single('taskFile'), async (req, res, next) => {
+  
   try {
     const { title, description, dueDate, status } = req.body;
-    const newTask = new Task({ title, description, dueDate, status });
+    
+    const taskData = {
+      title,
+      description,
+      dueDate,
+      status,
+      file: req.file ? req.file.path : null,  
+    };
+    const newTask = new Task(taskData);
     const savedTask = await newTask.save();
+    
+    // Return the saved task as response
     res.status(201).json(savedTask);
   } catch (error) {
     next(error);
   }
 });
+
+
+
 
 // Get all tasks
 router.get("/", verifyToken, async (req, res, next) => {

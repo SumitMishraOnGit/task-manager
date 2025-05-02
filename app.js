@@ -11,4 +11,8 @@ app.use(express.json());
 app.use("/tasks", taskRoutes);
 
 app.use("/users", userRoutes);
+
+// Uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 module.exports = app;
