@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const verifyToken = require("../../middlewares/authMiddleware");
 const errorHandler = require("../../middleware/errorhandling");
 const uploadProfilePic = require("../../middlewares/multerProfile");
+const checkRole = require('../middlewares/checkRole');
 
 router.use(express.json());
 router.use(errorHandler);
@@ -52,15 +53,21 @@ router.post("/login", async (req, res, next) => {
 });
 
 // ------------------ GET ALL USERS ------------------
-router.get("/", verifyToken, async (req, res, next) => {
-  try {
-    const users = await User.find();
-    if (!users.length) return res.status(404).json({ message: "No users found!" });
-    res.status(200).json(users);
-  } catch (error) {
-    next(error);
+router.get(
+  "/",
+  verifyToken,
+  checkRole(["admin"]), 
+  async (req, res, next) => {
+    try {
+      const users = await User.find();
+      if (!users.length) return res.status(404).json({ message: "No users found!" });
+      res.status(200).json(users);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
+
 
 // ------------------ UPDATE USER BY ID ------------------
 router.put("/:id", verifyToken, async (req, res, next) => {
