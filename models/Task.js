@@ -5,6 +5,7 @@ const taskSchema = new mongoose.Schema({
   description: { type: String },
   dueDate: { type: Date },
   status: { type: Boolean, required: true, default: false },
+  file: { type: String, default: null },
 });
 
 const Task = mongoose.model("Task", taskSchema);

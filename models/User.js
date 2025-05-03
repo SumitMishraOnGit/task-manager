@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
+// user schema 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -21,11 +22,22 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minlength: [6, "Password must be at least 6 characters"],
   },
-  role: {
-    type: String,
-    enum: ["user", "admin"], 
-    default: "user",
+  roles: {
+    type: [String],
+    enum: ["admin", "editor", "viewer", "user"],
+    default: ["user"]
   },
+  file: {
+    type: String,
+    default: null,
+  },
+});
+
+// virtual field for admin
+UserSchema.virtual("isAdmin").get(function () {
+  const hasEditor = this.roles.includes("editor");
+  const hasViewer = this.roles.includes("viewer");
+  return hasEditor && hasViewer;
 });
 
 // Hash password before saving
