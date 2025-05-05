@@ -30,4 +30,8 @@ const uploadProfilePic = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
+<<<<<<< HEAD
 module.exports = uploadProfilePic;
+=======
+module.exports = uploadProfilePic;
+>>>>>>> 862dafafcc5fec51a82ff8082455d0a262246ef9
