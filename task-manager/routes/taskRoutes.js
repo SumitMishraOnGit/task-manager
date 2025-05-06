@@ -2,7 +2,10 @@ const express = require("express");
 const router = express.Router();
 const Task = require("../../models/Task");
 const verifyToken = require("../../middlewares/authMiddleware");
-const uploadTaskFile = require("../../middlewares/multerTasks");  
+const uploadTaskFile = require("../../middlewares/multerTasks");
+const { buildTaskQuery, getSortOption } = require("../utils/taskQueryUtils");
+
+  
 
 // Create a new task with file upload
 router.post("/", verifyToken, uploadTaskFile.single('taskFile'), async (req, res, next) => {
@@ -112,5 +115,18 @@ router.get("/paginate", verifyToken, async (req, res, next) => {
     next(error);
   }
 });
+// search, sort, filter logic
+router.get("/tasks", authMiddleware, async (req, res) => {
+  try {
+    const queryObj = buildTaskQuery(req.query);
+    const sortOption = getSortOption(req.query.sort);
+
+    const tasks = await Task.find(queryObj).sort(sortOption);
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching tasks", error });
+  }
+});
+
 
 module.exports = router;

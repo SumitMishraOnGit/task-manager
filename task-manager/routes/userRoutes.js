@@ -130,8 +130,4 @@ router.post("/uploadProfile", verifyToken, uploadProfilePic.single("profilePic")
   }
 });
 
-<<<<<<< HEAD
 module.exports = router;
-=======
-module.exports = router;
->>>>>>> 862dafafcc5fec51a82ff8082455d0a262246ef9

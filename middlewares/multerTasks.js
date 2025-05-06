@@ -25,8 +25,4 @@ const uploadTaskFile = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
 
-<<<<<<< HEAD
 module.exports = uploadTaskFile;
-=======
-module.exports = uploadTaskFile;
->>>>>>> 862dafafcc5fec51a82ff8082455d0a262246ef9
