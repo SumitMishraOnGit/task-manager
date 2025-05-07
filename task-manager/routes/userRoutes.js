@@ -123,8 +123,29 @@ router.get(
     }
   }
 );
+// ------------------ GET USERS BY ID ------------------// 
+router.get("/profile", verifyToken, async (req, res, next) => {
+  try {
+    // Retrieve user ID from the authenticated request
+    const userId = req.user.userId;
 
+    // Fetch user data from the database
+    const user = await User.findById(userId).select("-password"); // Exclude password
 
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return user info
+    res.status(200).json({
+      name: user.name,
+      email: user.email,
+      avatar: user.file,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 // ------------------ UPDATE USER BY ID ------------------
 router.put("/:id", verifyToken, async (req, res, next) => {
   try {
@@ -139,6 +160,47 @@ router.put("/:id", verifyToken, async (req, res, next) => {
   }
 });
 
+// ------------------ UPDATING YOUR OWN CREDENTIALS ------------------
+router.put("/profile", verifyToken, uploadProfilePic.single("avatar"), async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { name, currentPassword, newPassword } = req.body;
+
+    // Fetch the user from the database
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Validate current password
+    if (currentPassword && !(await user.comparePassword(currentPassword))) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // Update fields
+    if (name) user.name = name;
+    if (req.file) user.file = req.file.path; // Update avatar
+    if (newPassword) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+    }
+
+    // Save the updated user
+    const updatedUser = await user.save();
+
+    // Return updated info
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        name: updatedUser.name,
+        email: updatedUser.email,
+        avatar: updatedUser.file,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 // ------------------ DELETE USER BY ID ------------------
 router.delete("/:id", verifyToken, async (req, res, next) => {
   try {
