@@ -42,15 +42,57 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
+    // Fetch task statistics based on user role
+    let taskStats = {};
+    if (user.role === "admin" || user.role === "editor" || user.role === "viewer") {
+
+      // Admin sees stats for all users
+      const totalTasks = await Task.countDocuments();
+      const completedTasks = await Task.countDocuments({ status: true });
+      const pendingTasks = totalTasks - completedTasks;
+
+      taskStats = {
+        totalTasks,
+        completedTasks,
+        pendingTasks,
+      };
+    } else {
+      // Regular user sees only their own stats
+      const totalTasks = await Task.countDocuments({ createdBy: user._id });
+      const completedTasks = await Task.countDocuments({
+        createdBy: user._id,
+        status: true,
+      });
+      const pendingTasks = totalTasks - completedTasks;
+
+      taskStats = {
+        totalTasks,
+        completedTasks,
+        pendingTasks,
+      };
+    }
+
+    // Generate JWT token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
-    res.status(200).json({ message: "Login successful", token });
+    // Send the login response with user info and task stats
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role, // Include role info
+      },
+      taskStats,
+    });
   } catch (error) {
     next(error);
   }
 });
+
 
 // ------------------ GET ALL USERS ------------------
 router.get(

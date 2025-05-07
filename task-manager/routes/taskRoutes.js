@@ -3,9 +3,8 @@ const router = express.Router();
 const Task = require("../../models/Task");
 const verifyToken = require("../../middlewares/authMiddleware");
 const uploadTaskFile = require("../../middlewares/multerTasks");
-const { buildTaskQuery, getSortOption } = require("../utils/taskQueryUtils");
-
-  
+const { buildTaskQuery, getSortOption } = require("../../utils/taskQueryUtils");
+const checkRole = require("../../middlewares/checkRoles");
 
 // Create a new task with file upload
 router.post("/", verifyToken, uploadTaskFile.single('taskFile'), async (req, res, next) => {
@@ -100,33 +99,35 @@ router.delete(
 );
 
 // Pagination
-router.get("/paginate", verifyToken, async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
-
-    const tasks = await Task.find().skip(skip).limit(limit);
-    const totalTasks = await Task.countDocuments();
-    const totalPages = Math.ceil(totalTasks / limit);
-
-    res.status(200).json({ page, limit, totalTasks, totalPages, tasks });
-  } catch (error) {
-    next(error);
-  }
-});
-// search, sort, filter logic
-router.get("/tasks", authMiddleware, async (req, res) => {
+router.get("/paginated", verifyToken, async (req, res, next) => {
   try {
     const queryObj = buildTaskQuery(req.query);
     const sortOption = getSortOption(req.query.sort);
 
-    const tasks = await Task.find(queryObj).sort(sortOption);
-    res.json(tasks);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const tasks = await Task.find(queryObj)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit);
+
+    const totalTasks = await Task.countDocuments(queryObj);
+    const totalPages = Math.ceil(totalTasks / limit);
+
+    res.status(200).json({
+      page,
+      limit,
+      totalTasks,
+      totalPages,
+      tasks,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching tasks", error });
+    next(error);
   }
 });
+
 
 
 module.exports = router;
