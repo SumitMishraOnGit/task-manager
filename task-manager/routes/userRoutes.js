@@ -8,6 +8,7 @@ const errorHandler = require("../../middleware/errorhandling");
 const uploadProfilePic = require("../../middlewares/multerProfile");
 const checkRole = require('../middlewares/checkRole');
 
+router.use(cookieParser());
 router.use(express.json());
 router.use(errorHandler);
 
@@ -45,8 +46,6 @@ router.post("/login", async (req, res, next) => {
     // Fetch task statistics based on user role
     let taskStats = {};
     if (user.role === "admin" || user.role === "editor" || user.role === "viewer") {
-
-      // Admin sees stats for all users
       const totalTasks = await Task.countDocuments();
       const completedTasks = await Task.countDocuments({ status: true });
       const pendingTasks = totalTasks - completedTasks;
@@ -57,7 +56,6 @@ router.post("/login", async (req, res, next) => {
         pendingTasks,
       };
     } else {
-      // Regular user sees only their own stats
       const totalTasks = await Task.countDocuments({ createdBy: user._id });
       const completedTasks = await Task.countDocuments({
         createdBy: user._id,
@@ -72,15 +70,32 @@ router.post("/login", async (req, res, next) => {
       };
     }
 
-    // Generate JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+    // Generate access token
+    const accessToken = jwt.sign(
+      { userId: user._id, roles: user.roles },
+      process.env.JWT_ACCESS_SECRET,
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" } // Default: 15 minutes
+    );
+
+    // Generate refresh token
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" } // Default: 7 days
+    );
+
+    // Store refresh token in HTTP-only cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Send the login response with user info and task stats
+    // Send the login response with access token and task stats
     res.status(200).json({
       message: "Login successful",
-      token,
+      accessToken,
       user: {
         name: user.name,
         email: user.email,
@@ -92,7 +107,6 @@ router.post("/login", async (req, res, next) => {
     next(error);
   }
 });
-
 
 // ------------------ GET ALL USERS ------------------
 router.get(
@@ -172,4 +186,45 @@ router.post("/uploadProfile", verifyToken, uploadProfilePic.single("profilePic")
   }
 });
 
+// ------------------ REFRESH TOKEN ------------------
+router.post("/refresh-token", async (req, res, next) => {
+  try {
+    // Get the refresh token from the HTTP-only cookie
+    const { refreshToken } = req.cookies;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Refresh token not provided" });
+    }
+
+    // Verify the refresh token
+    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(403).json({ message: "Invalid or expired refresh token" });
+      }
+      // Generate a new access token
+      const accessToken = jwt.sign(
+        { userId: decoded.userId, roles: decoded.roles },
+        process.env.JWT_ACCESS_SECRET,
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" } // Default: 15 minutes
+      );
+
+      // Send the new access token to the client
+      res.status(200).json({ accessToken });
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ------------------ LOGOUT ROUTE ------------------
+router.post("/logout", (req, res) => {
+  // Clear the refresh token cookie
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+    sameSite: "strict",
+  });
+
+  res.status(200).json({ message: "Logged out successfully" });
+});
 module.exports = router;

@@ -29,9 +29,6 @@ router.post("/", verifyToken, uploadTaskFile.single('taskFile'), async (req, res
   }
 });
 
-
-
-
 // Get all tasks(role based)
 router.get(
   "/tasks",
@@ -44,7 +41,6 @@ router.get(
     res.status(200).json(tasks);
   }
 );
-
 
 // Get task by id
 router.get("/:id", verifyToken, async (req, res, next) => {
