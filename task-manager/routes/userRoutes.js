@@ -10,8 +10,8 @@ const errorHandler = require("../../middlewares/errorHandling");
 const uploadProfilePic = require("../../middlewares/multerProfile");
 const checkRole = require('../../middlewares/checkRoles');
 
-router.use(cookieParser());
 router.use(express.json());
+router.use(cookieParser());
 router.use(errorHandler);
 
 // ------------------ SIGNUP ------------------
@@ -164,7 +164,7 @@ router.get("/profile", verifyToken, async (req, res, next) => {
   }
 });
 // ------------------ UPDATE USER BY ID ------------------
-router.put("/:id", verifyToken, async (req, res, next) => {
+router.put("/profile/:id", verifyToken, async (req, res, next) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,

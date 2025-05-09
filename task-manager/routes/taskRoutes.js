@@ -29,33 +29,28 @@ router.post("/", verifyToken, uploadTaskFile.single('taskFile'), async (req, res
   }
 });
 
-// Get all tasks(role based)
-router.get(
-  "/tasks",
-  verifyToken, 
-  checkRole(["admin", "user"]), 
+// Get all tasks (role-based)
+router.get("/",
+  verifyToken,
+  checkRole(["admin", "user"]),
   async (req, res, next) => {
-    const tasks = req.user.role === "admin" 
-      ? await Task.find() 
-      : await Task.find({ createdBy: req.user._id }); 
-    res.status(200).json(tasks);
+    try {
+      // Check the role of the logged-in user
+      const tasks =
+        req.user.roles.includes("admin") 
+          ? await Task.find() 
+          : await Task.find({ createdBy: req.user.userId }); 
+
+      // Return the tasks
+      res.status(200).json(tasks);
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
-// Get task by id
-router.get("/:id", verifyToken, async (req, res, next) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ message: "Task not found!" });
-    res.status(200).json(task);
-  } catch (error) {
-    next(error);
-  }
-});
-
 // Update a task by ID
-router.put(
-  "/tasks/:id",
+router.put("/:id",
   verifyToken, 
   checkRole(["admin", "user"]), // Both can update
   async (req, res, next) => {
@@ -75,21 +70,30 @@ router.put(
 
 // Delete a task by ID
 router.delete(
-  "/tasks/:id", 
-  verifyToken, 
+  "/:id",
+  verifyToken,
   checkRole(["admin", "user"]), // Allow both, but check ownership
   async (req, res, next) => {
     try {
+      // Find the task by ID
       const task = await Task.findById(req.params.id);
 
-    if (req.user.role === "user" && task.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "You can only delete your own tasks." });
-    }
+      // If the task does not exist, return a 404 error
+      if (!task) {
+        return res.status(404).json({ message: "Task not found!" });
+      }
 
-    await task.remove(); // Delete task
-    res.status(200).json({ message: "Task deleted!" });
+      // If the user is not an admin and does not own the task, deny access
+      if (req.user.role === "user" && task.createdBy.toString() !== req.user.userId.toString()) {
+        return res.status(403).json({ message: "You can only delete your own tasks." });
+      }
+
+      // Delete the task
+      await task.remove();
+      res.status(200).json({ message: "Task deleted!" });
     } catch (error) {
-      next(error)
+      // Pass the error to the global error handler
+      next(error);
     }
   }
 );

@@ -1,10 +1,17 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+
+// Ensure the directory exists
+const uploadDir = path.join(__dirname, "../uploads/profile");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Storage settings
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/profile"); // separate folder for profile pics
+    cb(null, uploadDir); // Save files in the uploads/profile directory
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}-${file.originalname}`;
