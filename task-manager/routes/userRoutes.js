@@ -8,7 +8,7 @@ const bcrypt = require("bcryptjs");
 const verifyToken = require("../../middlewares/authMiddleware");
 const errorHandler = require("../../middlewares/errorHandling");
 const uploadProfilePic = require("../../middlewares/multerProfile");
-const checkRole = require('../../middlewares/checkRoles');
+// const checkRole = require('../../middlewares/checkRoles');
 
 router.use(express.json());
 router.use(cookieParser());
@@ -125,57 +125,57 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-// ------------------ GET ALL USERS ------------------
-router.get(
-  "/",
-  verifyToken,
-  checkRole(["admin"]), 
-  async (req, res, next) => {
-    try {
-      const users = await User.find();
-      if (!users.length) return res.status(404).json({ message: "No users found!" });
-      res.status(200).json(users);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-// ------------------ GET USERS BY ID ------------------// 
-router.get("/profile", verifyToken, async (req, res, next) => {
-  try {
-    // Retrieve user ID from the authenticated request
-    const userId = req.user.userId;
+// // ------------------ GET ALL USERS ------------------
+// router.get(
+//   "/",
+//   verifyToken,
+//   checkRole(["admin"]), 
+//   async (req, res, next) => {
+//     try {
+//       const users = await User.find();
+//       if (!users.length) return res.status(404).json({ message: "No users found!" });
+//       res.status(200).json(users);
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
+// // ------------------ GET USERS BY ID ------------------// 
+// router.get("/profile", verifyToken, async (req, res, next) => {
+//   try {
+//     // Retrieve user ID from the authenticated request
+//     const userId = req.user.userId;
 
-    // Fetch user data from the database
-    const user = await User.findById(userId).select("-password"); // Exclude password
+//     // Fetch user data from the database
+//     const user = await User.findById(userId).select("-password"); // Exclude password
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
 
-    // Return user info
-    res.status(200).json({
-      name: user.name,
-      email: user.email,
-      avatar: user.file,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-// ------------------ UPDATE USER BY ID ------------------
-router.put("/profile/:id", verifyToken, async (req, res, next) => {
-  try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedUser) return res.status(404).json({ message: "User not found" });
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    next(error);
-  }
-});
+//     // Return user info
+//     res.status(200).json({
+//       name: user.name,
+//       email: user.email,
+//       avatar: user.file,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// // ------------------ UPDATE USER BY ID ------------------
+// router.put("/profile/:id", verifyToken, async (req, res, next) => {
+//   try {
+//     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+//       new: true,
+//       runValidators: true,
+//     });
+//     if (!updatedUser) return res.status(404).json({ message: "User not found" });
+//     res.status(200).json(updatedUser);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 // ------------------ UPDATING YOUR OWN CREDENTIALS ------------------
 router.put("/profile", verifyToken, uploadProfilePic.single("avatar"), async (req, res, next) => {
@@ -218,33 +218,33 @@ router.put("/profile", verifyToken, uploadProfilePic.single("avatar"), async (re
     next(error);
   }
 });
-// ------------------ DELETE USER BY ID ------------------
-router.delete("/:id", verifyToken, async (req, res, next) => {
-  try {
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
-    if (!deletedUser) return res.status(404).json({ message: "User not found" });
-    res.status(200).json({ message: "User deleted successfully", deletedUser });
-  } catch (error) {
-    next(error);
-  }
-});
+// // ------------------ DELETE USER BY ID ------------------
+// router.delete("/:id", verifyToken, async (req, res, next) => {
+//   try {
+//     const deletedUser = await User.findByIdAndDelete(req.params.id);
+//     if (!deletedUser) return res.status(404).json({ message: "User not found" });
+//     res.status(200).json({ message: "User deleted successfully", deletedUser });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
-// ------------------ PAGINATION ------------------
-router.get("/paginate", verifyToken, async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
+// // ------------------ PAGINATION ------------------
+// router.get("/paginate", verifyToken, async (req, res, next) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 5;
+//     const skip = (page - 1) * limit;
 
-    const users = await User.find().skip(skip).limit(limit);
-    const totalUsers = await User.countDocuments();
-    const totalPages = Math.ceil(totalUsers / limit);
+//     const users = await User.find().skip(skip).limit(limit);
+//     const totalUsers = await User.countDocuments();
+//     const totalPages = Math.ceil(totalUsers / limit);
 
-    res.status(200).json({ page, limit, totalUsers, totalPages, users });
-  } catch (error) {
-    next(error);
-  }
-});
+//     res.status(200).json({ page, limit, totalUsers, totalPages, users });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 // ------------------ PROFILE PIC UPLOAD ------------------
 router.post("/uploadProfile", verifyToken, uploadProfilePic.single("profilePic"), async (req, res, next) => {

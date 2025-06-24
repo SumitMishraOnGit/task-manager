@@ -4,7 +4,7 @@ const Task = require("../../models/Task");
 const verifyToken = require("../../middlewares/authMiddleware");
 const uploadTaskFile = require("../../middlewares/multerTasks");
 const { buildTaskQuery, getSortOption } = require("../../utils/taskQueryUtils");
-const checkRole = require("../../middlewares/checkRoles");
+// const checkRole = require("../../middlewares/checkRoles");
 
 // Create a new task with file upload
 router.post("/", verifyToken, uploadTaskFile.single('taskFile'), async (req, res, next) => {
@@ -29,25 +29,6 @@ router.post("/", verifyToken, uploadTaskFile.single('taskFile'), async (req, res
   }
 });
 
-// Get all tasks (role-based)
-router.get("/",
-  verifyToken,
-  checkRole(["admin", "user"]),
-  async (req, res, next) => {
-    try {
-      // Check the role of the logged-in user
-      const tasks =
-        req.user.roles.includes("admin") 
-          ? await Task.find() 
-          : await Task.find({ createdBy: req.user.userId }); 
-
-      // Return the tasks
-      res.status(200).json(tasks);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
 
 // Update a task by ID
 router.put("/:id",
@@ -131,3 +112,23 @@ router.get("/paginated", verifyToken, async (req, res, next) => {
 
 
 module.exports = router;
+
+// // Get all tasks (role-based)
+// router.get("/",
+//   verifyToken,
+//   checkRole(["admin", "user"]),
+//   async (req, res, next) => {
+//     try {
+//       // Check the role of the logged-in user
+//       const tasks =
+//         req.user.roles.includes("admin") 
+//           ? await Task.find() 
+//           : await Task.find({ createdBy: req.user.userId }); 
+
+//       // Return the tasks
+//       res.status(200).json(tasks);
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
