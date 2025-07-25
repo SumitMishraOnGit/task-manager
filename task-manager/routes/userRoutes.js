@@ -17,13 +17,13 @@ router.use(errorHandler);
 // ------------------ SIGNUP ------------------
 router.post("/signup", async (req, res, next) => {
   try {
-    const { name, email, password, roles } = req.body;
-    const userRoles = roles && roles.length > 0 ? roles : ["user"];
+    const { name, email, password } = req.body;
+    // const userRoles = roles && roles.length > 0 ? roles : ["user"];
     const user = new User({
       name,
       email,
       password,
-      roles: userRoles, // Explicitly set roles
+      // roles: userRoles, // Explicitly set roles
     });
     await user.save();
     res.status(201).json({ message: "User created successfully", user });
@@ -63,13 +63,13 @@ router.post("/login", async (req, res, next) => {
 
     // 5. Fetch task stats based on user role
     if (user.role === "admin" || user.role === "editor" || user.role === "viewer") {
-      const totalTasks = await Task.countDocuments();
-      if (totalTasks > 0) {
-        const completedTasks = await Task.countDocuments({ status: true });
-        const pendingTasks = totalTasks - completedTasks;
+    //   const totalTasks = await Task.countDocuments();
+    //   if (totalTasks > 0) {
+    //     const completedTasks = await Task.countDocuments({ status: true });
+    //     const pendingTasks = totalTasks - completedTasks;
 
-        taskStats = { totalTasks, completedTasks, pendingTasks };
-      }
+    //     taskStats = { totalTasks, completedTasks, pendingTasks };
+    //   }
     } else {
       const totalTasks = await Task.countDocuments({ createdBy: user._id });
       if (totalTasks > 0) {
@@ -112,6 +112,7 @@ router.post("/login", async (req, res, next) => {
           ? "Login successful, but no tasks found. Please create some tasks."
           : "Login successful",
       accessToken,
+      refreshToken,  // Add refresh token to response
       user: {
         name: user.name,
         email: user.email,
@@ -268,8 +269,7 @@ router.post("/uploadProfile", verifyToken, uploadProfilePic.single("profilePic")
 // ------------------ REFRESH TOKEN ------------------
 router.post("/refresh-token", async (req, res, next) => {
   try {
-    // Get the refresh token from the HTTP-only cookie
-    const { refreshToken } = req.cookies;
+    const { refreshToken } = req.body;  // Get from request body instead of cookies
 
     if (!refreshToken) {
       return res.status(401).json({ message: "Refresh token not provided" });
@@ -280,15 +280,26 @@ router.post("/refresh-token", async (req, res, next) => {
       if (err) {
         return res.status(403).json({ message: "Invalid or expired refresh token" });
       }
+
       // Generate a new access token
       const accessToken = jwt.sign(
         { userId: decoded.userId, roles: decoded.roles },
         process.env.JWT_ACCESS_SECRET,
-        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" } // Default: 15 minutes
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" }
       );
 
-      // Send the new access token to the client
-      res.status(200).json({ accessToken });
+      // Generate a new refresh token
+      const newRefreshToken = jwt.sign(
+        { userId: decoded.userId },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }
+      );
+
+      // Send both tokens
+      res.status(200).json({
+        accessToken,
+        refreshToken: newRefreshToken
+      });
     });
   } catch (error) {
     next(error);

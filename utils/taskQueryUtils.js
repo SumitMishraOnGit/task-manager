@@ -1,3 +1,18 @@
+// Date range helper
+function getDateRange(range) {
+  const now = new Date();
+  let start, end;
+  end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1); // exclusive end
+  if (range === 'weekly') {
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6); // last 7 days
+  } else if (range === 'monthly') {
+    start = new Date(now.getFullYear(), now.getMonth(), 1); // start of month
+  } else {
+    start = null;
+  }
+  return { start, end };
+}
+
 // buildTaskQuery handles search and filtering
 function buildTaskQuery(queryParams) {
     const queryObj = {};
@@ -14,6 +29,14 @@ function buildTaskQuery(queryParams) {
     //  Filter (e.g., by status)
     if (queryParams.status) {
       queryObj.status = queryParams.status;
+    }
+
+    // Date range filter
+    if (queryParams.range) {
+      const { start, end } = getDateRange(queryParams.range);
+      if (start && end) {
+        queryObj.createdAt = { $gte: start, $lt: end };
+      }
     }
   
     return queryObj;
@@ -40,6 +63,7 @@ function buildTaskQuery(queryParams) {
   
   module.exports = {
     buildTaskQuery,
-    getSortOption
+    getSortOption,
+    getDateRange
   };
   
