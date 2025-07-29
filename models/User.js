@@ -1,3 +1,5 @@
+// Backend/models/User.js
+
 const mongoose = require("mongoose");
 const bcrypt = require('bcryptjs');
 
@@ -27,17 +29,10 @@ const UserSchema = new mongoose.Schema({
     enum: ["admin", "editor", "viewer", "user"],
     default: ["user"]
   },
-  file: {
+  file: { // This is for the avatar path
     type: String,
     default: null,
   },
-});
-
-// virtual field for admin
-UserSchema.virtual("isAdmin").get(function () {
-  const hasEditor = this.roles.includes("editor");
-  const hasViewer = this.roles.includes("viewer");
-  return hasEditor && hasViewer;
 });
 
 // Hash password before saving
