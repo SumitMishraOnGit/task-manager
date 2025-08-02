@@ -24,11 +24,11 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     minlength: [6, "Password must be at least 6 characters"],
   },
-  roles: {
-    type: [String],
-    enum: ["admin", "editor", "viewer", "user"],
-    default: ["user"]
-  },
+  // roles: {
+  //   type: [String],
+  //   enum: ["admin", "editor", "viewer", "user"],
+  //   default: ["user"]
+  // },
   file: { // This is for the avatar path
     type: String,
     default: null,

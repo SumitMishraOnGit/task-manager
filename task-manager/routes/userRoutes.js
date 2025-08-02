@@ -1,5 +1,3 @@
-// Backend/routes/userRoutes.js
-
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const router = express.Router();
@@ -65,7 +63,7 @@ router.get("/profile", verifyToken, async (req, res, next) => {
   }
 });
 
-// --- UPDATE CURRENT USER'S PROFILE ---
+// --- UPDATE CURRENT USER'S PROFILE (Name & Avatar) ---
 router.put("/profile", verifyToken, uploadProfilePic.single("avatar"), async (req, res, next) => {
   try {
     const { name } = req.body;
@@ -77,6 +75,26 @@ router.put("/profile", verifyToken, uploadProfilePic.single("avatar"), async (re
     if (req.file) user.file = req.file.path;
     const updatedUser = await user.save();
     res.status(200).json({ message: "Profile updated successfully", user: { name: updatedUser.name, email: updatedUser.email, avatar: updatedUser.file } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// --- CHANGE USER PASSWORD ---
+router.put("/profile/change-password", verifyToken, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect current password" });
+    }
+    user.password = newPassword;
+    await user.save();
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     next(error);
   }
@@ -98,55 +116,30 @@ router.get("/profile/activity-heatmap", verifyToken, async (req, res, next) => {
   }
 });
 
-// ------------------ REFRESH TOKEN ------------------
+// --- REFRESH TOKEN ---
 router.post("/refresh-token", async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;  // Get from request body instead of cookies
-
+    const { refreshToken } = req.body;
     if (!refreshToken) {
       return res.status(401).json({ message: "Refresh token not provided" });
     }
-
-    // Verify the refresh token
     jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
       if (err) {
         return res.status(403).json({ message: "Invalid or expired refresh token" });
       }
-
-      // Generate a new access token
-      const accessToken = jwt.sign(
-        { userId: decoded.userId, roles: decoded.roles },
-        process.env.JWT_ACCESS_SECRET,
-        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" }
-      );
-
-      // Generate a new refresh token
-      const newRefreshToken = jwt.sign(
-        { userId: decoded.userId },
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }
-      );
-
-      // Send both tokens
-      res.status(200).json({
-        accessToken,
-        refreshToken: newRefreshToken
-      });
+      const accessToken = jwt.sign({ userId: decoded.userId, roles: decoded.roles }, process.env.JWT_ACCESS_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" });
+      const newRefreshToken = jwt.sign({ userId: decoded.userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" });
+      res.status(200).json({ accessToken, refreshToken: newRefreshToken });
     });
   } catch (error) {
     next(error);
   }
 });
 
-// ------------------ LOGOUT ROUTE ------------------
+// --- LOGOUT ---
 router.post("/logout", (req, res) => {
-  // Clear the refresh token cookie
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-    sameSite: "strict",
-  });
-
+  res.clearCookie("refreshToken", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict" });
   res.status(200).json({ message: "Logged out successfully" });
 });
+
 module.exports = router;
